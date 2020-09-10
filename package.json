@@ -4,6 +4,7 @@
   "description": "A tax report generator for cryptoassets.",
   "main": "lib/index.js",
   "scripts": {
+    "build": "webpack",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -18,5 +19,25 @@
   "bugs": {
     "url": "https://github.com/CryptoTaxTools/crypto-tax-report/issues"
   },
-  "homepage": "https://github.com/CryptoTaxTools/crypto-tax-report#readme"
+  "homepage": "https://github.com/CryptoTaxTools/crypto-tax-report#readme",
+  "dependencies": {
+    "@babel/polyfill": "7.11.5",
+    "immutable": "4.0.0-rc.12",
+    "moment": "2.27.0",
+    "uuid": "8.3.0"
+  },
+  "devDependencies": {
+    "@babel/core": "7.6.2",
+    "@babel/plugin-proposal-class-properties": "7.10.4",
+    "@babel/plugin-proposal-object-rest-spread": "7.11.0",
+    "@babel/preset-env": "7.6.2",
+    "@babel/preset-typescript": "7.10.4",
+    "@types/node": "11.15.23",
+    "@types/uuid": "3.4.9",
+    "babel-loader": "8.0.6",
+    "bignumber.js": "8.1.1",
+    "webpack": "4.40.2",
+    "webpack-cli": "3.3.9",
+    "webpack-node-externals": "1.7.2"
+  }
 }
