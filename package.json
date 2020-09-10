@@ -1,0 +1,22 @@
+{
+  "name": "crypto-tax-report",
+  "version": "0.0.1",
+  "description": "A tax report generator for cryptoassets.",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CryptoTaxTools/crypto-tax-report.git"
+  },
+  "keywords": [
+    "taxes"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CryptoTaxTools/crypto-tax-report/issues"
+  },
+  "homepage": "https://github.com/CryptoTaxTools/crypto-tax-report#readme"
+}
