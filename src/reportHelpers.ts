@@ -1,12 +1,12 @@
 import { Map as IMap, List, fromJS, Collection } from 'immutable';
 import { BigNumber } from 'bignumber.js';
 
-import { TaxReport } from './types';
+import { TaxReport, ImmutableMap } from './types';
 import TaxLot from './taxLot';
 import Disposal from './disposal';
 import moment from 'moment';
 
-export const applyUnmatchedSales = (report: TaxReport): IMap<any, any> => {
+export const applyUnmatchedSales = (report: TaxReport): TaxReport => {
   let currentReport = report;
   report.reduce(
     (
@@ -51,7 +51,13 @@ export const applyUnmatchedSales = (report: TaxReport): IMap<any, any> => {
   return currentReport;
 };
 
-export const addIncomeToReport = (report: IMap<any, any>, taxLot: TaxLot): IMap<any, any> => {
+export const addIncomeToReport = (
+  report: TaxReport,
+  taxLot: TaxLot
+): ImmutableMap<{
+  report: TaxReport;
+  taxLot: TaxLot;
+}> => {
   let reportToUpdate = report;
   if (taxLot.get('isIncome')) {
     const incomeMoment = moment.utc(taxLot.unix, 'X');
@@ -75,10 +81,10 @@ export const addIncomeToReport = (report: IMap<any, any>, taxLot: TaxLot): IMap<
 };
 
 export const updateReportIncomeFromLots = (
-  report: IMap<any, any>,
+  report: TaxReport,
   lots: IMap<string, List<TaxLot>>,
   year: string
-): IMap<any, any> => {
+): TaxReport => {
   const unixSOY = Number(
     moment
       .utc(year, 'YYYY')
