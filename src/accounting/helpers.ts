@@ -2,22 +2,23 @@ import { Map as IMap, List } from 'immutable';
 import moment from 'moment';
 import { BigNumber } from 'bignumber.js';
 
+import { ITransaction } from '../types';
 import { InvalidParamError } from '../errors';
 
-export const transactionIsBuy = (transaction: IMap<any, any>) => {
+export const transactionIsBuy = (transaction: ITransaction) => {
   return transaction.get('side').toUpperCase() !== 'SELL';
 };
 
-export const transactionFeeCode = (transaction: IMap<any, any>) => {
+export const transactionFeeCode = (transaction: ITransaction) => {
   const feeCode = transaction.get('fee_code');
   return feeCode ? feeCode.toUpperCase() : feeCode;
 };
 
-export const transactionHasFee = (transaction: IMap<any, any>) => {
+export const transactionHasFee = (transaction: ITransaction) => {
   return Boolean(transactionFeeCode(transaction)) && Boolean(transaction.get('fee_amount'));
 };
 
-export const transactionUnixNumber = (transaction: IMap<any, any>) => {
+export const transactionUnixNumber = (transaction: ITransaction) => {
   const txMoment = moment.utc(transaction.get('timestamp'), moment.ISO_8601);
   if (!txMoment.isValid()) {
     throw new InvalidParamError(

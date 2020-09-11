@@ -83,7 +83,7 @@ export interface TaxRepoortOptionsConfig {
   decimalPlaces: number;
 }
 
-export type Transactions = Array<
+export type Transaction =
   | TradeInput
   | DepositInput
   | WithdrawalInput
@@ -94,8 +94,22 @@ export type Transactions = Array<
   | CompoundRedeemInput
   | CompoundRepayBorrowInput
   | CompoundLiquidateBorrow_BorrowerInput
-  | CompoundLiquidateBorrow_LiquidatorInput
->;
+  | CompoundLiquidateBorrow_LiquidatorInput;
+
+export type Transactions = Transaction[];
+
+export type ITransaction =
+  | Trade
+  | Deposit
+  | Withdrawal
+  | Income
+  | Lost
+  | CompoundMint
+  | CompoundBorrow
+  | CompoundRedeem
+  | CompoundRepayBorrow
+  | CompoundLiquidateBorrow_Borrower
+  | CompoundLiquidateBorrow_Liquidator;
 
 export interface TaxReportOptions {
   transactions: Transactions;

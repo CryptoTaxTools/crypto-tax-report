@@ -8,7 +8,9 @@
     "prebuild": "npm run clean",
     "build": "webpack",
     "test": "jest --config ./jest.config.js && jest --config ./jest.compiled.config.js",
-    "test:build": "npm run build && npm run test"
+    "test:build": "npm run build && npm run test",
+    "format": "prettier --write '{src,__mocks__,tests}/**/*.{js,json,ts,tsx}'",
+    "check-types": "tsc"
   },
   "repository": {
     "type": "git",
@@ -42,8 +44,16 @@
     "babel-loader": "8.0.6",
     "bignumber.js": "8.1.1",
     "jest": "24.9.0",
+    "prettier": "1.19.1",
+    "typescript": "^3.3.4000",
     "webpack": "4.40.2",
     "webpack-cli": "3.3.9",
     "webpack-node-externals": "1.7.2"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "arrowParens": "always",
+    "tabWidth": 2,
+    "printWidth": 100
   }
 }
