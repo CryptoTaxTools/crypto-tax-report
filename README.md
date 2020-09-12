@@ -23,7 +23,7 @@ const report = createReport({
     priceMethod: 'BASE',
     costBasisMethod: 'FIFO',
     decimalPlaces: 2
-  }
+  },
   transactions: [
     {
       tx_id: '1',
