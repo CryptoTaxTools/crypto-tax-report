@@ -12,7 +12,7 @@ npm install git://github.com/CryptoTaxTools/crypto-tax-report.git#v0.0.2
 
 ## Example Use
 
-Here is an example of importing and using the library:
+Here is an example of importing and using the library. If you'd like more examples of using the library, please reference the [tests](https://github.com/CryptoTaxTools/crypto-tax-report/tree/master/tests).
 
 ```js
 import createReport from 'crypto-tax-report';
