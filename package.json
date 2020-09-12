@@ -27,6 +27,7 @@
   "homepage": "https://github.com/CryptoTaxTools/crypto-tax-report#readme",
   "dependencies": {
     "@babel/polyfill": "7.11.5",
+    "bignumber.js": "8.1.1",
     "immutable": "4.0.0-rc.12",
     "moment": "^2.27.0",
     "uuid": "^3.4.0"
@@ -42,7 +43,6 @@
     "@types/uuid": "3.4.9",
     "babel-jest": "24.9.0",
     "babel-loader": "8.0.6",
-    "bignumber.js": "8.1.1",
     "jest": "24.9.0",
     "prettier": "1.19.1",
     "typescript": "^3.3.4000",
