@@ -10,7 +10,7 @@ A javascript library for creating configurable tax reports. Supports generic tra
 npm install git://github.com/CryptoTaxTools/crypto-tax-report.git#v0.0.2
 ```
 
-## Use
+## Example Use
 
 Here is an example of importing and using the library:
 
@@ -18,6 +18,12 @@ Here is an example of importing and using the library:
 import createReport from 'crypto-tax-report';
 
 const report = createReport({
+  config: {
+    localCurrency: 'USD',
+    priceMethod: 'BASE',
+    costBasisMethod: 'FIFO',
+    decimalPlaces: 2
+  }
   transactions: [
     {
       tx_id: '1',
@@ -62,13 +68,7 @@ const report = createReport({
       quote_code: 'USD',
       price: '200'
     }
-  ],
-  config: {
-    localCurrency: 'USD',
-    priceMethod: 'BASE',
-    costBasisMethod: 'FIFO',
-    decimalPlaces: 2
-  }
+  ]
 });
 
 // Example report output
@@ -121,3 +121,42 @@ const report = createReport({
 }
 
 ```
+
+## Input Specs
+
+The `createReport` function accepts a single object as it's first and only parameter. This object has three properties: `config`, `transactions`, and `prices`.
+
+Report Input Property | Required | Data Type
+------------ | ------------- | -------------
+config | Yes | Object
+transactions | Yes | Array
+prices | Yes | Array 
+
+### Config
+
+The `config` object sets the local currency to use for asset prices, the price method, the accounting method, and the number of decimal places to use for report outputs.
+
+Config Property | Default Value | Options         | Required      | Data Type
+------------    | ------------- | --------------- | ------------- | -------------
+localCurrency   | `'USD'`       | Any String      | No            | String 
+priceMethod     | `'BASE'`      | `'BASE'`, `'QUOTE'` | No            | String
+costBasisMethod | `'FIFO'`      | `'FIFO'`, `'HIFO'`, `'LIFO'` | No     | String 
+decimalPlaces   | `2`           | Any Number      | No            | Number
+
+
+**localCurrency**: A local currency must be specified in order to determine which price record to use. For example, if your trade is between BTC and LTC, and you specify GBP as your local currency, then the report code will look for price records that include GBP as the quote code.
+
+**priceMethod**: The price method determines which code in a transaction to use for determining cost basis. For a trade between BTC and LTC where BTC is the base and LTC is the quote, if the price method is `BASE`, the tax code will use a BTC price record for determining the cost basis for the resulting tax lot from the trade.
+
+**costBasisMethod**: Your options for cost basis accounting are FIFO (first-in, first-out), LIFO (last-in, first-out), and HIFO (highest-in, first-out).
+
+**decimalPlaces**: The number of decimals places to use for figures in report output.
+
+
+### Transactions
+
+Transactions are an array of objects. At least 1 transaction is required, otherwise an exception is thrown. Please reference `types.ts` for a full list of transaction types.
+
+### Prices
+
+Prices are required for transactions that use any asset other than the localCurrency. Please reference `types.ts` for the Price object type definition.
