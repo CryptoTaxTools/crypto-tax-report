@@ -49,13 +49,6 @@ const report = createReport({
   ],
   prices: [
     {
-      tx_id: '1',
-      timestamp: '2020-09-10T01:00:00Z',
-      base_code: 'USD',
-      quote_code: 'USD',
-      price: '1'
-    },
-    {
       tx_id: '2',
       timestamp: '2020-09-10T01:00:00Z',
       base_code: 'BTC',
@@ -63,25 +56,11 @@ const report = createReport({
       price: '100'
     },
     {
-      tx_id: '2',
-      timestamp: '2020-09-10T01:00:00Z',
-      base_code: 'USD',
-      quote_code: 'USD',
-      price: '1'
-    },
-    {
       tx_id: '3',
       timestamp: '2020-09-11T01:00:00Z',
       base_code: 'BTC',
       quote_code: 'USD',
       price: '200'
-    },
-    {
-      tx_id: '3',
-      timestamp: '2020-09-11T01:00:00Z',
-      base_code: 'USD',
-      quote_code: 'USD',
-      price: '1'
     }
   ],
   config: {
