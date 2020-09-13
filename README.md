@@ -157,6 +157,10 @@ decimalPlaces   | `2`           | Any Number      | No            | Number
 
 Transactions are an array of objects. At least 1 transaction is required, otherwise an exception is thrown. Please reference `types.ts` for a full list of transaction types. There are generic types, which apply to any protocol, and there are protocol-specific transaction types, like the ones modeled after Compound Finance activity.
 
+#### Specific Protocol Transaction Types
+
+* [Compound Finance Transaction Docs](https://github.com/CryptoTaxTools/crypto-tax-report/blob/master/docs/compound.md)
+
 #### Generic Transaction Types
 
 ##### Trade
