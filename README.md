@@ -181,7 +181,6 @@ Property | Data Type | Allowed Value | Required
 tx_id | String | Any String | Yes
 tx_type | String | `'DEPOSIT'` | Yes
 timestamp | String | ISO 8601 DateTime String | Yes
-side | String | `BUY`, `SELL`, `NONE` | Yes
 deposit_code | String | Any String | Yes
 deposit_amount | String | Any String | Yes
 fee_code | String | Any String | No
@@ -194,7 +193,6 @@ Property | Data Type | Allowed Value | Required
 tx_id | String | Any String | Yes
 tx_type | String | `'WITHDRAWAL'` | Yes
 timestamp | String | ISO 8601 DateTime String | Yes
-side | String | `BUY`, `SELL`, `NONE` | Yes
 withdrawal_code | String | Any String | Yes
 withdrawal_amount | String | Any String | Yes
 fee_code | String | Any String | No
@@ -207,7 +205,6 @@ Property | Data Type | Allowed Value | Required
 tx_id | String | Any String | Yes
 tx_type | String | `'INCOME'` | Yes
 timestamp | String | ISO 8601 DateTime String | Yes
-side | String | `BUY`, `SELL`, `NONE` | Yes
 income_code | String | Any String | Yes
 income_amount | String | Any String | Yes
 fee_code | String | Any String | No
@@ -220,7 +217,6 @@ Property | Data Type | Allowed Value | Required
 tx_id | String | Any String | Yes
 tx_type | String | `'LOST'` | Yes
 timestamp | String | ISO 8601 DateTime String | Yes
-side | String | `BUY`, `SELL`, `NONE` | Yes
 lost_code | String | Any String | Yes
 lost_amount | String | Any String | Yes
 fee_code | String | Any String | No
