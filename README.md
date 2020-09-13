@@ -136,7 +136,7 @@ prices | Yes | Array
 
 The `config` object sets the local currency to use for asset prices, the price method, the accounting method, and the number of decimal places to use for report outputs.
 
-Config Property | Default Value | Options         | Required      | Data Type
+Config Property | Default Value | Allowed Value  | Required      | Data Type
 ------------    | ------------- | --------------- | ------------- | -------------
 localCurrency   | `'USD'`       | Any String      | No            | String 
 priceMethod     | `'BASE'`      | `'BASE'`, `'QUOTE'` | No            | String
@@ -155,8 +155,85 @@ decimalPlaces   | `2`           | Any Number      | No            | Number
 
 ### Transactions
 
-Transactions are an array of objects. At least 1 transaction is required, otherwise an exception is thrown. Please reference `types.ts` for a full list of transaction types.
+Transactions are an array of objects. At least 1 transaction is required, otherwise an exception is thrown. Please reference `types.ts` for a full list of transaction types. There are generic types, which apply to any protocol, and there are protocol-specific transaction types, like the ones modeled after Compound Finance activity.
+
+#### Generic Transaction Types
+
+##### Trade
+
+Property | Data Type | Allowed Value | Required
+------------ | ------------- | ------------- | -------------
+tx_id | String | Any String | Yes
+tx_type | String | `'TRADE'` | Yes
+timestamp | String | ISO 8601 DateTime String | Yes
+side | String | `BUY`, `SELL`, `NONE` | Yes
+base_code | String | Any String | Yes
+base_amount | String | Any String | Yes
+quote_code | String | Any String | Yes
+quote_amount | String | Any String | Yes
+fee_code | String | Any String | No
+fee_amount | String | Any String | No
+
+##### Deposit
+
+Property | Data Type | Allowed Value | Required
+------------ | ------------- | ------------- | -------------
+tx_id | String | Any String | Yes
+tx_type | String | `'DEPOSIT'` | Yes
+timestamp | String | ISO 8601 DateTime String | Yes
+side | String | `BUY`, `SELL`, `NONE` | Yes
+deposit_code | String | Any String | Yes
+deposit_amount | String | Any String | Yes
+fee_code | String | Any String | No
+fee_amount | String | Any String | No
+
+##### Withdrawal
+
+Property | Data Type | Allowed Value | Required
+------------ | ------------- | ------------- | -------------
+tx_id | String | Any String | Yes
+tx_type | String | `'WITHDRAWAL'` | Yes
+timestamp | String | ISO 8601 DateTime String | Yes
+side | String | `BUY`, `SELL`, `NONE` | Yes
+withdrawal_code | String | Any String | Yes
+withdrawal_amount | String | Any String | Yes
+fee_code | String | Any String | No
+fee_amount | String | Any String | No
+
+##### Income
+
+Property | Data Type | Allowed Value | Required
+------------ | ------------- | ------------- | -------------
+tx_id | String | Any String | Yes
+tx_type | String | `'INCOME'` | Yes
+timestamp | String | ISO 8601 DateTime String | Yes
+side | String | `BUY`, `SELL`, `NONE` | Yes
+income_code | String | Any String | Yes
+income_amount | String | Any String | Yes
+fee_code | String | Any String | No
+fee_amount | String | Any String | No
+
+##### Lost
+
+Property | Data Type | Allowed Value | Required
+------------ | ------------- | ------------- | -------------
+tx_id | String | Any String | Yes
+tx_type | String | `'LOST'` | Yes
+timestamp | String | ISO 8601 DateTime String | Yes
+side | String | `BUY`, `SELL`, `NONE` | Yes
+lost_code | String | Any String | Yes
+lost_amount | String | Any String | Yes
+fee_code | String | Any String | No
+fee_amount | String | Any String | No
 
 ### Prices
 
 Prices are required for transactions that use any asset other than the localCurrency. Please reference `types.ts` for the Price object type definition.
+
+Property | Data Type | Allowed Value | Required
+------------ | ------------- | ------------- | -------------
+tx_id | String | Any String | Yes
+timestamp | String | ISO 8601 DateTime String | Yes
+base_code | String | Any String | Yes
+quote_code | String | Any String | Yes
+price | String | Any String | Yes
