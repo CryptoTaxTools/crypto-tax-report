@@ -7,7 +7,7 @@ A javascript library for creating configurable tax reports. Supports generic tra
 ## Installation
 
 ```
-npm install git://github.com/CryptoTaxTools/crypto-tax-report.git#v0.0.2
+npm install git://github.com/CryptoTaxTools/crypto-tax-report.git#v0.0.3
 ```
 
 ## Example Use
@@ -19,10 +19,11 @@ import createReport from 'crypto-tax-report';
 
 const report = createReport({
   config: {
-    localCurrency: 'USD',
-    priceMethod: 'BASE',
-    costBasisMethod: 'FIFO',
-    decimalPlaces: 2
+    local_currency: 'USD',
+    price_method: 'BASE',
+    cost_basis_method: 'FIFO',
+    decimal_places: 2,
+    allow_lot_overlap: true,
   },
   transactions: [
     {
@@ -84,7 +85,9 @@ const report = createReport({
           "date_sold": "2020-09-11T01:00:00Z",
           "cost_basis": "100",
           "asset_amount": "1",
-          "date_acquired": "2020-09-10T01:00:00Z"
+          "date_acquired": "2020-09-10T01:00:00Z",
+          "tx_id_sale": "3",
+          "tx_id_lot": "2",
         }
       ],
       "unmatched": [
@@ -95,28 +98,31 @@ const report = createReport({
           "cost_basis": "0",
           "asset_amount": "1",
           "date_acquired": "2020-09-10T01:00:00Z",
-          "transaction_id": "2"
+          "tx_id_sale": "2"
         }
       ],
       "lost": [],
       "interest_income": [],
       "assets": {
         "USD": {
-          "bought": "299",
-          "sold": "100",
+          "increase": "299",
+          "decrease": "100",
           "holdings": "199"
         },
         "BTC": {
-          "bought": "1",
-          "sold": "1",
+          "increase": "1",
+          "decrease": "1",
           "holdings": "0"
         }
       }
     }
   },
   "config": {
+    "local_currency": "USD",
     "price_method": "BASE",
-    "cost_basis_method": "FIFO"
+    "cost_basis_method": "FIFO",
+    "decimal_places": 2,
+    "allow_lot_overlap": true,
   }
 }
 
@@ -136,30 +142,33 @@ prices | Yes | Array
 
 The `config` object sets the local currency to use for asset prices, the price method, the accounting method, and the number of decimal places to use for report outputs.
 
-Config Property | Default Value | Allowed Value  | Required      | Data Type
-------------    | ------------- | --------------- | ------------- | -------------
-localCurrency   | `'USD'`       | Any String      | No            | String 
-priceMethod     | `'BASE'`      | `'BASE'`, `'QUOTE'` | No            | String
-costBasisMethod | `'FIFO'`      | `'FIFO'`, `'HIFO'`, `'LIFO'` | No     | String 
-decimalPlaces   | `2`           | Any Number      | No            | Number
+Config Property   | Default Value | Allowed Value  | Required      | Data Type
+------------      | ------------- | --------------- | ------------- | -------------
+local_currency    | `'USD'`       | Any String      | No            | String 
+price_method      | `'BASE'`      | `'BASE'`, `'QUOTE'` | No            | String
+cost_basis_method | `'FIFO'`      | `'FIFO'`, `'HIFO'`, `'LIFO'` | No     | String 
+decimal_places    | `2`           | Any Number      | No            | Number
+allow_lot_overlap | `true`        | `true`, `false` | No            | Boolean
 
 
-**localCurrency**: A local currency must be specified in order to determine which price record to use. For example, if your trade is between BTC and LTC, and you specify GBP as your local currency, then the report code will look for price records that include GBP as the quote code.
+**local_currency**: A local currency must be specified in order to determine which price record to use. For example, if your trade is between BTC and LTC, and you specify GBP as your local currency, then the report code will look for price records that include GBP as the quote code.
 
-**priceMethod**: The price method determines which code in a transaction to use for determining cost basis. For a trade between BTC and LTC where BTC is the base and LTC is the quote, if the price method is `BASE`, the tax code will use a BTC price record for determining the cost basis for the resulting tax lot from the trade.
+**price_method**: The price method determines which code in a transaction to use for determining cost basis. For a trade between BTC and LTC where BTC is the base and LTC is the quote, if the price method is `BASE`, the tax code will use a BTC price record for determining the cost basis for the resulting tax lot from the trade.
 
-**costBasisMethod**: Your options for cost basis accounting are FIFO (first-in, first-out), LIFO (last-in, first-out), and HIFO (highest-in, first-out).
+**cost_basis_method**: Your options for cost basis accounting are FIFO (first-in, first-out), LIFO (last-in, first-out), and HIFO (highest-in, first-out).
 
-**decimalPlaces**: The number of decimals places to use for figures in report output.
+**decimal_places**: The number of decimals places to use for figures in report output.
+
+**allow_lot_overlap**: If lot overlap is allowed, two transactions with exactly the same timestamp will be able to reference each others tax lot values when calculating sales. For example, instead of creating an unmatched sale, if another transaction increases the asset holdings at the same timestamp, that sale will use the available funds as the matched tax lot.
 
 
 ### Transactions
 
-Transactions are an array of objects. At least 1 transaction is required, otherwise an exception is thrown. Please reference `types.ts` for a full list of transaction types. There are generic types, which apply to any protocol, and there are protocol-specific transaction types, like the ones modeled after Compound Finance activity.
+Transactions are an array of objects. At least 1 transaction is required, otherwise an exception is thrown. Please reference `types.ts` for a full list of transaction types. There are generic types, which apply to any protocol, and there are protocol-specific transaction types, like the ones modeled after Compound Finance activity. Please see [fees.md](./docs/fees.md) for some notes on fee treatment.
 
 #### Specific Protocol Transaction Types
 
-* [Compound Finance Transaction Docs](https://github.com/CryptoTaxTools/crypto-tax-report/blob/master/docs/compound.md)
+* [Compound Finance Transaction Docs](./docs/compound.md)
 
 #### Generic Transaction Types
 
@@ -175,8 +184,7 @@ base_code | String | Any String | Yes
 base_amount | String | Any String | Yes
 quote_code | String | Any String | Yes
 quote_amount | String | Any String | Yes
-fee_code | String | Any String | No
-fee_amount | String | Any String | No
+fee_tx_ids | Array | Array of Strings | No
 
 ##### Deposit
 
@@ -187,8 +195,7 @@ tx_type | String | `'DEPOSIT'` | Yes
 timestamp | String | ISO 8601 DateTime String | Yes
 deposit_code | String | Any String | Yes
 deposit_amount | String | Any String | Yes
-fee_code | String | Any String | No
-fee_amount | String | Any String | No
+fee_tx_ids | Array | Array of Strings | No
 
 ##### Withdrawal
 
@@ -199,8 +206,7 @@ tx_type | String | `'WITHDRAWAL'` | Yes
 timestamp | String | ISO 8601 DateTime String | Yes
 withdrawal_code | String | Any String | Yes
 withdrawal_amount | String | Any String | Yes
-fee_code | String | Any String | No
-fee_amount | String | Any String | No
+fee_tx_ids | Array | Array of Strings | No
 
 ##### Income
 
@@ -211,8 +217,7 @@ tx_type | String | `'INCOME'` | Yes
 timestamp | String | ISO 8601 DateTime String | Yes
 income_code | String | Any String | Yes
 income_amount | String | Any String | Yes
-fee_code | String | Any String | No
-fee_amount | String | Any String | No
+fee_tx_ids | Array | Array of Strings | No
 
 ##### Lost
 
@@ -223,8 +228,7 @@ tx_type | String | `'LOST'` | Yes
 timestamp | String | ISO 8601 DateTime String | Yes
 lost_code | String | Any String | Yes
 lost_amount | String | Any String | Yes
-fee_code | String | Any String | No
-fee_amount | String | Any String | No
+fee_tx_ids | Array | Array of Strings | No
 
 ### Prices
 

@@ -1,21 +1,25 @@
 import { Map as IMap, List } from 'immutable';
 import { BigNumber } from 'bignumber.js';
 
+import { getFeeAmount } from '../fee';
 import TaxLot from '../../taxLot';
 import Disposal from '../../disposal';
-import { Trade, Price, PriceMethod, LocalCurrency } from '../../types';
-import {
-  transactionUnixNumber,
-  transactionIsBuy,
-  transactionHasFee,
-  transactionFeeCode,
-  getPriceBigNumber
-} from '../helpers';
+import { Price, PriceMethod, LocalCurrency, ImmutableMap, ITransaction } from '../../types';
+import { transactionUnixNumber, transactionIsBuy, getPriceBigNumber } from '../helpers';
+
+export interface TradeOptions {
+  txId: string;
+  pricesMap: ImmutableMap<{ string: List<Price> }>;
+  transactionsMap: ImmutableMap<{ string: List<ITransaction> }>;
+  priceMethod: PriceMethod;
+  localCurrency: LocalCurrency;
+  gainsAsInterestIncome?: boolean;
+}
 
 /*
  * TRADE
  *
- * EVERY side of a transaction (including fee) has a price record.
+ * EVERY side of a transaction has a price record.
  * THERE ARE NO EXCEPTIONS.
  *
  * Notes for future:
@@ -31,69 +35,51 @@ import {
  * Disposals represent assets released.
  */
 export const lotsAndDisposalsFromTrade = ({
-  transaction,
-  prices,
+  txId,
+  pricesMap,
+  transactionsMap,
   priceMethod,
   localCurrency,
   gainsAsInterestIncome = false
-}: {
-  transaction: Trade;
-  prices: List<Price>;
-  priceMethod: PriceMethod;
-  localCurrency: LocalCurrency;
-  gainsAsInterestIncome?: boolean;
-}) => {
-  const transactionPricesList = prices;
-  // Setup helper constants.
-  const txID = transaction.get('tx_id');
+}: TradeOptions) => {
+  const transactionPrices = pricesMap.get(txId);
+  const transaction = transactionsMap.get(txId);
   const unixNumber = transactionUnixNumber(transaction);
   const isBuy = transactionIsBuy(transaction);
   const isSell = !isBuy;
-  const hasFee = transactionHasFee(transaction);
 
-  /*
-   * (1) Get the taxable amount to setup initial values for basis and proceeds.
-   */
-  const priceStrategy = priceMethod.toLowerCase(); // either BASE or QUOTE
+  // (1) Get the taxable amount to setup initial values for basis and proceeds.
+  const priceStrategy = priceMethod.toLowerCase(); // either "base" or "quote"
   const tradeAmount = new BigNumber(transaction.get(`${priceStrategy}_amount`));
   const tradeCode = transaction.get(`${priceStrategy}_code`);
-  const tradePrice = getPriceBigNumber(transactionPricesList, tradeCode, localCurrency);
+  const tradePrice = getPriceBigNumber(transactionPrices, tradeCode, localCurrency);
   const taxableAmount = tradeAmount.times(tradePrice);
   let basisAmount = taxableAmount;
   let proceedsAmount = taxableAmount;
 
-  /*
-   * (2) Adjust basis and proceeds with applicable fees.
-   */
-  let feeCode;
-  let feeAmount = new BigNumber('0');
-  let feePrice;
-  let taxableFeeAmount;
-  if (hasFee) {
-    feeCode = transactionFeeCode(transaction);
-    feeAmount = new BigNumber(transaction.get('fee_amount'));
-    feePrice = getPriceBigNumber(transactionPricesList, feeCode, localCurrency);
-    taxableFeeAmount = feeAmount.times(feePrice);
-
-    if (isBuy) {
-      // If transaction is type BUY or NONE, fee increases basis.
-      basisAmount = BigNumber.sum(basisAmount, taxableFeeAmount);
-    } else {
-      // If transaction is type SELL, fee reduces basis.
-      proceedsAmount = proceedsAmount.minus(taxableFeeAmount);
-    }
+  // (2) Adjust basis or proceeds with fees.
+  // Reduce taxable gain by the value of the fees. Increasing tax lot basis and
+  // reducing disposal proceeds both ultimately serve to reduce taxable gains.
+  // See fees.tx for more info.
+  const taxableFeeAmount = getFeeAmount({
+    transaction,
+    pricesMap,
+    transactionsMap,
+    priceMethod,
+    localCurrency
+  });
+  if (isBuy) {
+    // If transaction is type BUY or NONE, fee increases basis.
+    basisAmount = BigNumber.sum(basisAmount, taxableFeeAmount);
+  } else {
+    // If transaction is type SELL, fee reduces proceeds.
+    proceedsAmount = proceedsAmount.minus(taxableFeeAmount);
   }
 
-  /*
-   * (3) Determine TaxLot values.
-   */
+  // (3) Determine TaxLot values.
   const lotSide = isBuy ? 'base' : 'quote';
   const lotCode = transaction.get(`${lotSide}_code`).toUpperCase();
-  let lotAmount = new BigNumber(transaction.get(`${lotSide}_amount`));
-  if (hasFee && feeCode === lotCode) {
-    lotAmount = lotAmount.minus(feeAmount);
-  }
-
+  const lotAmount = new BigNumber(transaction.get(`${lotSide}_amount`));
   const taxLots = List([
     new TaxLot({
       unix: unixNumber,
@@ -101,52 +87,26 @@ export const lotsAndDisposalsFromTrade = ({
       assetAmount: lotAmount,
       basisCode: localCurrency,
       basisAmount: basisAmount,
-      transactionId: txID,
+      transactionId: txId,
       isIncome: false
     })
   ]);
 
-  /*
-   * (4) Determine Disposal values.
-   */
+  // (4) Determine Disposal values.
   const disposalSide = isSell ? 'base' : 'quote';
   const disposalCode = transaction.get(`${disposalSide}_code`).toUpperCase();
-  let disposalAmount = new BigNumber(transaction.get(`${disposalSide}_amount`));
-  if (hasFee && feeCode === disposalCode) {
-    disposalAmount = BigNumber.sum(disposalAmount, feeAmount);
-  }
-
-  const disposalList = List([
+  const disposalAmount = new BigNumber(transaction.get(`${disposalSide}_amount`));
+  const disposals = List([
     new Disposal({
       unix: unixNumber,
       assetCode: disposalCode,
       assetAmount: disposalAmount,
       proceedsCode: localCurrency,
       proceedsAmount: proceedsAmount,
-      transactionId: txID,
+      transactionId: txId,
       gainsAsInterestIncome
     })
   ]);
-
-  let otherDisposals = List();
-
-  /*
-   * (5) Standalone fees create their own disposal records.
-   */
-  if (hasFee && feeCode !== disposalCode && feeCode !== lotCode) {
-    otherDisposals = otherDisposals.push(
-      new Disposal({
-        unix: unixNumber,
-        assetCode: feeCode,
-        assetAmount: feeAmount,
-        proceedsCode: localCurrency,
-        proceedsAmount: taxableFeeAmount,
-        transactionId: txID
-      })
-    );
-  }
-
-  const disposals = disposalList.merge(otherDisposals);
 
   return IMap({
     taxLots: taxLots,

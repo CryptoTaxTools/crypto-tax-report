@@ -13,7 +13,7 @@ export function bigNumberToString(obj, base, places = 2) {
       obj[key] = bigNumberToString(
         obj[key],
         base,
-        ['bought', 'sold', 'holdings', 'asset_amount'].includes(key) ? 18 : undefined
+        ['increase', 'decrease', 'holdings', 'asset_amount'].includes(key) ? 18 : places
       );
     });
   }
@@ -23,7 +23,7 @@ export function bigNumberToString(obj, base, places = 2) {
     // convert items in array
     obj = obj.map(function(item) {
       // convert item to a string if bignumber
-      return bigNumberToString(item, base);
+      return bigNumberToString(item, base, places);
     });
   }
 

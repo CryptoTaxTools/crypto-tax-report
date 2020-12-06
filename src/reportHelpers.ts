@@ -68,7 +68,7 @@ export const addIncomeToReport = (
       date_acquired: incomeMoment.format(),
       basis_amount: taxLot.basisAmount,
       basis: taxLot.basisCode,
-      tx_id: taxLot.transactionId
+      tx_id_lot: taxLot.transactionId
     });
     reportToUpdate = report.updateIn([incomeYear, 'income'], (list: List<any>) =>
       list.push(income)
@@ -130,7 +130,7 @@ export const setupAssetProperties = (
       .endOf('year')
       .format('X')
   );
-  const reportWithBought = allLots.reduce(
+  const reportWithIncrease = allLots.reduce(
     (accReport: IMap<any, any>, assetLots: List<TaxLot>, assetKey: string) => {
       const assetLotsInYear = assetLots.filter((lot: TaxLot) => {
         return lot.unix >= unixSOY && lot.unix <= unixEOY;
@@ -138,32 +138,37 @@ export const setupAssetProperties = (
       const assetReduction = assetLotsInYear.reduce((numReduction: BigNumber, lot: TaxLot) => {
         return BigNumber.sum(lot.assetAmount, numReduction);
       }, new BigNumber(0));
-      // insert zero number for sold if not exists
-      const existingSold = accReport.getIn([year, 'assets', assetKey, 'bought'], new BigNumber(0));
+      const existingDecrease = accReport.getIn(
+        [year, 'assets', assetKey, 'increase'],
+        new BigNumber(0)
+      );
       const existingHoldings = accReport.getIn(
         [year, 'assets', assetKey, 'holdings'],
         new BigNumber(0)
       );
       return accReport
-        .setIn([year, 'assets', assetKey, 'bought'], assetReduction)
-        .setIn([year, 'assets', assetKey, 'sold'], existingSold)
+        .setIn([year, 'assets', assetKey, 'increase'], assetReduction)
+        .setIn([year, 'assets', assetKey, 'decrease'], existingDecrease)
         .setIn([year, 'assets', assetKey, 'holdings'], existingHoldings);
     },
     report
   );
-  const reportWithSold = yearDisposals.reduce((accReport: IMap<any, any>, disposal: Disposal) => {
-    const keypathSold = [year, 'assets', disposal.assetCode, 'sold'];
-    const keypathBought = [year, 'assets', disposal.assetCode, 'bought'];
-    const keypathHoldings = [year, 'assets', disposal.assetCode, 'holdings'];
-    const existingSold = accReport.getIn(keypathSold, new BigNumber(0));
-    const existingBought = accReport.getIn(keypathBought, new BigNumber(0));
-    const existingHoldings = accReport.getIn(keypathHoldings, new BigNumber(0));
-    return accReport
-      .setIn(keypathSold, BigNumber.sum(existingSold, disposal.assetAmount))
-      .setIn(keypathBought, existingBought)
-      .setIn(keypathHoldings, existingHoldings);
-  }, reportWithBought);
-  return reportWithSold;
+  const reportWithDecrease = yearDisposals.reduce(
+    (accReport: IMap<any, any>, disposal: Disposal) => {
+      const keypathDecrease = [year, 'assets', disposal.assetCode, 'decrease'];
+      const keypathIncrease = [year, 'assets', disposal.assetCode, 'increase'];
+      const keypathHoldings = [year, 'assets', disposal.assetCode, 'holdings'];
+      const existingDecrease = accReport.getIn(keypathDecrease, new BigNumber(0));
+      const existingIncrease = accReport.getIn(keypathIncrease, new BigNumber(0));
+      const existingHoldings = accReport.getIn(keypathHoldings, new BigNumber(0));
+      return accReport
+        .setIn(keypathDecrease, BigNumber.sum(existingDecrease, disposal.assetAmount))
+        .setIn(keypathIncrease, existingIncrease)
+        .setIn(keypathHoldings, existingHoldings);
+    },
+    reportWithIncrease
+  );
+  return reportWithDecrease;
 };
 
 export const buildReportIterable = (sortedDisposals: List<any>, yearList: List<any>): List<any> => {

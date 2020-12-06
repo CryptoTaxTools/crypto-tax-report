@@ -1,18 +1,26 @@
 import uuidv4 from 'uuid/v4';
 
-export const taxReportFactory = (report) => {
-  return Object.entries(report).reduce((reduction, [reportYear, reportEntries]) => {
-    reduction[reportYear] = {
-      income: [],
-      long: [],
-      short: [],
-      unmatched: [],
-      lost: [],
-      interest_income: [],
-      ...reportEntries
-    };
-    return reduction;
-  }, {});
+export const taxReportFactory = (fullReport) => {
+  const { report = {}, config = {} } = fullReport;
+  const generatedReport = Object.entries(report).reduce(
+    (reduction, [reportYear, reportEntries]) => {
+      reduction[reportYear] = {
+        income: [],
+        long: [],
+        short: [],
+        unmatched: [],
+        lost: [],
+        interest_income: [],
+        ...reportEntries
+      };
+      return reduction;
+    },
+    {}
+  );
+  return {
+    report: generatedReport,
+    config
+  };
 };
 
 export const incomeFactory = (income) => ({

@@ -12,8 +12,7 @@ c_token_code | String | Any String | Yes
 c_token_amount | String | Any String | Yes
 supplied_code | String | Any String | Yes
 supplied_amount | String | Any String | Yes
-fee_code | String | Any String | No
-fee_amount | String | Any String | No
+fee_tx_ids | Array | Array of Strings | No
 
 ##### Borrow
 
@@ -24,8 +23,7 @@ tx_type | String | `'COMPOUND_BORROW'` | Yes
 timestamp | String | ISO 8601 DateTime String | Yes
 borrow_code | String | Any String | Yes
 borrow_amount | String | Any String | Yes
-fee_code | String | Any String | No
-fee_amount | String | Any String | No
+fee_tx_ids | Array | Array of Strings | No
 
 ##### Redeem
 
@@ -38,8 +36,7 @@ c_token_code | String | Any String | Yes
 c_token_amount | String | Any String | Yes
 redeem_code | String | Any String | Yes
 redeem_amount | String | Any String | Yes
-fee_code | String | Any String | No
-fee_amount | String | Any String | No
+fee_tx_ids | Array | Array of Strings | No
 
 ##### Repay Borrow
 
@@ -50,8 +47,7 @@ tx_type | String | `'COMPOUND_REPAYBORROW'` | Yes
 timestamp | String | ISO 8601 DateTime String | Yes
 repay_code | String | Any String | Yes
 repay_amount | String | Any String | Yes
-fee_code | String | Any String | No
-fee_amount | String | Any String | No
+fee_tx_ids | Array | Array of Strings | No
 
 ##### Liquidate Borrow, Borrower Impact
 
@@ -62,8 +58,7 @@ tx_type | String | `'COMPOUND_LIQUIDATEBORROW_BORROWER'` | Yes
 timestamp | String | ISO 8601 DateTime String | Yes
 liquidate_code | String | Any String | Yes
 liquidate_amount | String | Any String | Yes
-fee_code | String | Any String | No
-fee_amount | String | Any String | No
+fee_tx_ids | Array | Array of Strings | No
 
 ##### Liquidate Borrow, Liquidator Impact
 
@@ -76,5 +71,4 @@ repay_code | String | Any String | Yes
 repay_amount | String | Any String | Yes
 seize_code | String | Any String | Yes
 seize_amount | String | Any String | Yes
-fee_code | String | Any String | No
-fee_amount | String | Any String | No
+fee_tx_ids | Array | Array of Strings | No

@@ -6,10 +6,10 @@ export const validateOptions = (options: TaxReportOptions): void => {
     prices,
     transactions,
     config: {
-      localCurrency = 'USD',
-      priceMethod = 'BASE',
-      costBasisMethod = 'FIFO',
-      decimalPlaces = 2
+      local_currency = 'USD',
+      price_method = 'BASE',
+      cost_basis_method = 'FIFO',
+      decimal_places = 2
     } = {}
   } = options;
   // Assert params are not null or undefined.
@@ -26,16 +26,16 @@ export const validateOptions = (options: TaxReportOptions): void => {
   if (!Array.isArray(prices)) {
     throw new InvalidParamError('"prices" must be an array.');
   }
-  if (typeof localCurrency !== 'string') {
+  if (typeof local_currency !== 'string') {
     throw new InvalidParamError('"localCurrency" must be a string.');
   }
-  if (typeof priceMethod !== 'string') {
+  if (typeof price_method !== 'string') {
     throw new InvalidParamError('"priceMethod" must be a string.');
   }
-  if (typeof costBasisMethod !== 'string') {
+  if (typeof cost_basis_method !== 'string') {
     throw new InvalidParamError('"costBasisMethod" must be a string.');
   }
-  if (typeof decimalPlaces !== 'number') {
+  if (typeof decimal_places !== 'number') {
     throw new InvalidParamError('"decimalPlaces" must be a number.');
   }
   // Assert length
