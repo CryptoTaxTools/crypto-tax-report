@@ -48,25 +48,25 @@ describe('Compound Lending', () => {
       transactions,
       prices,
       config: {
-        localCurrency: 'USD',
-        priceMethod: 'BASE',
-        costBasisMethod: 'FIFO',
-        decimalPlaces: 2
+        local_currency: 'USD',
+        price_method: 'BASE',
+        cost_basis_method: 'FIFO',
+        decimal_places: 2
       }
     });
-    const expected = {
-      report: taxReportFactory({
+    const expected = taxReportFactory({
+      report: {
         2019: {
           assets: {
             CDAI: {
               holdings: '4270.51788924',
-              bought: '4270.51788924',
-              sold: '0'
+              increase: '4270.51788924',
+              decrease: '0'
             },
             DAI: {
               holdings: '-89.90136056219178411',
-              bought: '0',
-              sold: '89.90136056219178411'
+              increase: '0',
+              decrease: '89.90136056219178411'
             }
           },
           short: [
@@ -76,7 +76,8 @@ describe('Compound Lending', () => {
               cost_basis: '0',
               date_acquired: '2019-01-01T01:00:00Z',
               date_sold: '2019-01-01T01:00:00Z',
-              proceeds: '179.8'
+              proceeds: '179.8',
+              tx_id_sale: tx.tx_id
             }
           ],
           unmatched: [
@@ -87,16 +88,19 @@ describe('Compound Lending', () => {
               date_acquired: '2019-01-01T01:00:00Z',
               date_sold: '2019-01-01T01:00:00Z',
               proceeds: '179.8',
-              transaction_id: tx.tx_id
+              tx_id_sale: tx.tx_id
             }
           ]
         }
-      }),
+      },
       config: {
+        local_currency: 'USD',
         price_method: 'BASE',
-        cost_basis_method: 'FIFO'
+        cost_basis_method: 'FIFO',
+        decimal_places: 2,
+        allow_lot_overlap: true
       }
-    };
+    });
     expect(received).toEqual(expected);
   });
   test('Lend and Redeem DAI', () => {
@@ -163,25 +167,25 @@ describe('Compound Lending', () => {
       transactions,
       prices,
       config: {
-        localCurrency: 'USD',
-        priceMethod: 'BASE',
-        costBasisMethod: 'FIFO',
-        decimalPlaces: 2
+        local_currency: 'USD',
+        price_method: 'BASE',
+        cost_basis_method: 'FIFO',
+        decimal_places: 2
       }
     });
-    const expected = {
-      report: taxReportFactory({
+    const expected = taxReportFactory({
+      report: {
         2019: {
           assets: {
             CDAI: {
               holdings: '0',
-              bought: '4270.51788924',
-              sold: '4270.51788924'
+              increase: '4270.51788924',
+              decrease: '4270.51788924'
             },
             DAI: {
               holdings: '0.001260206975322454',
-              bought: '89.902620769167106564',
-              sold: '89.90136056219178411'
+              increase: '89.902620769167106564',
+              decrease: '89.90136056219178411'
             }
           },
           short: [
@@ -191,7 +195,8 @@ describe('Compound Lending', () => {
               cost_basis: '0',
               date_acquired: '2019-01-01T01:00:00Z',
               date_sold: '2019-01-01T01:00:00Z',
-              proceeds: '179.8'
+              proceeds: '179.8',
+              tx_id_sale: mintTx.tx_id
             }
           ],
           unmatched: [
@@ -202,7 +207,7 @@ describe('Compound Lending', () => {
               date_acquired: '2019-01-01T01:00:00Z',
               date_sold: '2019-01-01T01:00:00Z',
               proceeds: '179.8',
-              transaction_id: mintTx.tx_id
+              tx_id_sale: mintTx.tx_id
             }
           ],
           // In this example, there is 1 USD cent of interest income.
@@ -213,16 +218,21 @@ describe('Compound Lending', () => {
               cost_basis: '179.8',
               date_acquired: '2019-01-01T01:00:00Z',
               date_sold: '2019-01-02T01:00:00Z',
-              proceeds: '179.81'
+              proceeds: '179.81',
+              tx_id_sale: redeemTx.tx_id,
+              tx_id_lot: mintTx.tx_id
             }
           ]
         }
-      }),
+      },
       config: {
+        local_currency: 'USD',
         price_method: 'BASE',
-        cost_basis_method: 'FIFO'
+        cost_basis_method: 'FIFO',
+        decimal_places: 2,
+        allow_lot_overlap: true
       }
-    };
+    });
     expect(received).toEqual(expected);
   });
   test('Lend with partial redemption, followed by lending with full redemption', () => {
@@ -371,25 +381,25 @@ describe('Compound Lending', () => {
       transactions,
       prices,
       config: {
-        localCurrency: 'USD',
-        priceMethod: 'BASE',
-        costBasisMethod: 'FIFO',
-        decimalPlaces: 2
+        local_currency: 'USD',
+        price_method: 'BASE',
+        cost_basis_method: 'FIFO',
+        decimal_places: 2
       }
     });
-    const expected = {
-      report: taxReportFactory({
+    const expected = taxReportFactory({
+      report: {
         2019: {
           assets: {
             CDAI: {
               holdings: '0',
-              bought: '1010',
-              sold: '1010'
+              increase: '1010',
+              decrease: '1010'
             },
             DAI: {
               holdings: '3',
-              bought: '5',
-              sold: '2'
+              increase: '5',
+              decrease: '2'
             }
           },
           short: [
@@ -399,7 +409,9 @@ describe('Compound Lending', () => {
               cost_basis: '1',
               date_acquired: '2019-01-01T00:10:00Z',
               date_sold: '2019-01-01T01:00:00Z',
-              proceeds: '1'
+              proceeds: '1',
+              tx_id_sale: mintTx1.tx_id,
+              tx_id_lot: deposit.tx_id
             },
             {
               asset: 'DAI',
@@ -407,7 +419,9 @@ describe('Compound Lending', () => {
               cost_basis: '1',
               date_acquired: '2019-01-02T01:00:00Z',
               date_sold: '2019-01-03T01:00:00Z',
-              proceeds: '1'
+              proceeds: '1',
+              tx_id_lot: redeemTx1.tx_id,
+              tx_id_sale: mintTx2.tx_id
             }
           ],
           interest_income: [
@@ -417,7 +431,9 @@ describe('Compound Lending', () => {
               cost_basis: '0.5',
               date_acquired: '2019-01-01T01:00:00Z',
               date_sold: '2019-01-02T01:00:00Z',
-              proceeds: '1'
+              proceeds: '1',
+              tx_id_lot: mintTx1.tx_id,
+              tx_id_sale: redeemTx1.tx_id
             },
             {
               asset: 'CDAI',
@@ -425,7 +441,9 @@ describe('Compound Lending', () => {
               cost_basis: '0.5',
               date_acquired: '2019-01-01T01:00:00Z',
               date_sold: '2019-01-04T01:00:00Z',
-              proceeds: '0.01'
+              proceeds: '0.01',
+              tx_id_lot: mintTx1.tx_id,
+              tx_id_sale: redeemTx2.tx_id
             },
             {
               asset: 'CDAI',
@@ -433,16 +451,21 @@ describe('Compound Lending', () => {
               cost_basis: '1',
               date_acquired: '2019-01-03T01:00:00Z',
               date_sold: '2019-01-04T01:00:00Z',
-              proceeds: '2.99'
+              proceeds: '2.99',
+              tx_id_lot: mintTx2.tx_id,
+              tx_id_sale: redeemTx2.tx_id
             }
           ]
         }
-      }),
+      },
       config: {
+        local_currency: 'USD',
         price_method: 'BASE',
-        cost_basis_method: 'FIFO'
+        cost_basis_method: 'FIFO',
+        decimal_places: 2,
+        allow_lot_overlap: true
       }
-    };
+    });
     expect(received).toEqual(expected);
   });
 
@@ -530,30 +553,30 @@ describe('Compound Lending', () => {
       transactions,
       prices,
       config: {
-        localCurrency: 'USD',
-        priceMethod: 'BASE',
-        costBasisMethod: 'FIFO',
-        decimalPlaces: 2
+        local_currency: 'USD',
+        price_method: 'BASE',
+        cost_basis_method: 'FIFO',
+        decimal_places: 2
       }
     });
-    const expected = {
-      report: taxReportFactory({
+    const expected = taxReportFactory({
+      report: {
         2019: {
           assets: {
             CDAI: {
-              bought: '10',
-              sold: '0',
+              increase: '10',
+              decrease: '0',
               holdings: '10'
             },
             DAI: {
-              bought: '1',
-              sold: '1',
+              increase: '1',
+              decrease: '1',
               holdings: '0'
             },
             ETH: {
-              bought: '1',
+              increase: '1',
               holdings: '0',
-              sold: '1'
+              decrease: '1'
             }
           },
           short: [
@@ -563,7 +586,9 @@ describe('Compound Lending', () => {
               cost_basis: '1',
               date_acquired: '2019-01-01T00:10:00Z',
               date_sold: '2019-01-01T01:00:00Z',
-              proceeds: '1'
+              proceeds: '1',
+              tx_id_lot: deposit.tx_id,
+              tx_id_sale: mintTx1.tx_id
             },
             {
               asset: 'ETH',
@@ -571,7 +596,9 @@ describe('Compound Lending', () => {
               cost_basis: '1',
               date_acquired: '2019-01-02T01:00:00Z',
               date_sold: '2019-01-03T01:00:00Z',
-              proceeds: '1'
+              proceeds: '1',
+              tx_id_lot: borrowTx1.tx_id,
+              tx_id_sale: repayTx1.tx_id
             }
           ],
           borrow_repayments: [
@@ -581,16 +608,21 @@ describe('Compound Lending', () => {
               cost_basis: '1',
               date_acquired: '2019-01-02T01:00:00Z',
               date_sold: '2019-01-03T01:00:00Z',
-              proceeds: '1'
+              proceeds: '1',
+              tx_id_lot: borrowTx1.tx_id,
+              tx_id_sale: repayTx1.tx_id
             }
           ]
         }
-      }),
+      },
       config: {
+        local_currency: 'USD',
         price_method: 'BASE',
-        cost_basis_method: 'FIFO'
+        cost_basis_method: 'FIFO',
+        decimal_places: 2,
+        allow_lot_overlap: true
       }
-    };
+    });
     expect(received).toEqual(expected);
   });
 });
@@ -598,7 +630,6 @@ describe('Compound Lending', () => {
 describe('Compound Liquidations', () => {
   test('Single liquidation; no prior borrow or lend', () => {
     const liquidation = liqBorrow_BorrowerFactory({
-      tx_id: 'c5ebb42f-8f56-495a-a349-858283844808',
       timestamp: '2019-01-01T00:10:00Z',
       liquidate_amount: '1',
       liquidate_code: 'CDAI'
@@ -612,7 +643,7 @@ describe('Compound Liquidations', () => {
     // the price record is required by the model but essentially does not matter
     // The disposal reduces any lots, but it does not result in a taxable sale.
     const cDaiPriceRecord = {
-      tx_id: 'c5ebb42f-8f56-495a-a349-858283844808',
+      tx_id: liquidation.tx_id,
       timestamp: '2019-01-01T00:10:00Z',
       base_code: 'CDAI',
       quote_code: 'USD',
@@ -623,21 +654,24 @@ describe('Compound Liquidations', () => {
       transactions,
       prices,
       config: {
-        localCurrency: 'USD',
-        priceMethod: 'BASE',
-        costBasisMethod: 'FIFO',
-        decimalPlaces: 2
+        local_currency: 'USD',
+        price_method: 'BASE',
+        cost_basis_method: 'FIFO',
+        decimal_places: 2
       }
     });
-    const expected = {
+    const expected = taxReportFactory({
       config: {
+        local_currency: 'USD',
+        price_method: 'BASE',
         cost_basis_method: 'FIFO',
-        price_method: 'BASE'
+        decimal_places: 2,
+        allow_lot_overlap: true
       },
-      report: taxReportFactory({
+      report: {
         '2019': {
           assets: {
-            CDAI: { bought: '0', holdings: '-1', sold: '1' }
+            CDAI: { increase: '0', holdings: '-1', decrease: '1' }
           },
           compound_liquidations_borrower: [
             {
@@ -646,7 +680,8 @@ describe('Compound Liquidations', () => {
               cost_basis: '0',
               date_acquired: '2019-01-01T00:10:00Z',
               date_sold: '2019-01-01T00:10:00Z',
-              proceeds: '1'
+              proceeds: '1',
+              tx_id_sale: liquidation.tx_id
             }
           ],
           income: [],
@@ -662,12 +697,12 @@ describe('Compound Liquidations', () => {
               date_acquired: '2019-01-01T00:10:00Z',
               date_sold: '2019-01-01T00:10:00Z',
               proceeds: '1',
-              transaction_id: 'c5ebb42f-8f56-495a-a349-858283844808'
+              tx_id_sale: liquidation.tx_id
             }
           ]
         }
-      })
-    };
+      }
+    });
     expect(received).toEqual(expected);
   });
   test('Single liquidation; borrow and collateral setup', () => {
@@ -731,23 +766,30 @@ describe('Compound Liquidations', () => {
       transactions,
       prices,
       config: {
-        localCurrency: 'USD',
-        priceMethod: 'BASE',
-        costBasisMethod: 'FIFO',
-        decimalPlaces: 2
+        local_currency: 'USD',
+        price_method: 'BASE',
+        cost_basis_method: 'FIFO',
+        decimal_places: 2
       }
     });
-    const expected = {
+    const expected = taxReportFactory({
       config: {
+        local_currency: 'USD',
+        price_method: 'BASE',
         cost_basis_method: 'FIFO',
-        price_method: 'BASE'
+        decimal_places: 2,
+        allow_lot_overlap: true
       },
-      report: taxReportFactory({
+      report: {
         '2019': {
           assets: {
-            ETH: { bought: '1', holdings: '1', sold: '0' },
-            CDAI: { bought: '4270.51788924', holdings: '4269.51788924', sold: '1' },
-            DAI: { bought: '0', holdings: '-89.90136056219178411', sold: '89.90136056219178411' }
+            ETH: { increase: '1', holdings: '1', decrease: '0' },
+            CDAI: { increase: '4270.51788924', holdings: '4269.51788924', decrease: '1' },
+            DAI: {
+              increase: '0',
+              holdings: '-89.90136056219178411',
+              decrease: '89.90136056219178411'
+            }
           },
           compound_liquidations_borrower: [
             {
@@ -756,7 +798,9 @@ describe('Compound Liquidations', () => {
               cost_basis: '1',
               date_acquired: '2019-01-01T01:00:00Z',
               date_sold: '2019-01-03T00:10:00Z',
-              proceeds: '1'
+              proceeds: '1',
+              tx_id_sale: liquidation.tx_id,
+              tx_id_lot: mint.tx_id
             }
           ],
           income: [],
@@ -770,7 +814,8 @@ describe('Compound Liquidations', () => {
               cost_basis: '0',
               date_acquired: '2019-01-01T01:00:00Z',
               date_sold: '2019-01-01T01:00:00Z',
-              proceeds: '4270.52'
+              proceeds: '4270.52',
+              tx_id_sale: mint.tx_id
             }
           ],
           unmatched: [
@@ -781,17 +826,16 @@ describe('Compound Liquidations', () => {
               date_acquired: '2019-01-01T01:00:00Z',
               date_sold: '2019-01-01T01:00:00Z',
               proceeds: '4270.52',
-              transaction_id: mint.tx_id
+              tx_id_sale: mint.tx_id
             }
           ]
         }
-      })
-    };
+      }
+    });
     expect(received).toEqual(expected);
   });
   test('Single liquidation; liquidator side', () => {
     const liquidation = liqBorrow_LiquidatorFactory({
-      tx_id: 'c5ebb42f-8f56-495a-a349-858283844808',
       timestamp: '2019-01-01T00:10:00Z',
       repay_amount: '1',
       repay_code: 'ZRX',
@@ -800,14 +844,14 @@ describe('Compound Liquidations', () => {
     });
     const transactions = [liquidation];
     const zrxPrice = {
-      tx_id: 'c5ebb42f-8f56-495a-a349-858283844808',
+      tx_id: liquidation.tx_id,
       timestamp: '2019-01-01T00:10:00Z',
       base_code: 'ZRX',
       quote_code: 'USD',
       price: '1'
     };
     const cTokenPrice = {
-      tx_id: 'c5ebb42f-8f56-495a-a349-858283844808',
+      tx_id: liquidation.tx_id,
       timestamp: '2019-01-01T00:10:00Z',
       base_code: 'CETH',
       quote_code: 'USD',
@@ -818,22 +862,25 @@ describe('Compound Liquidations', () => {
       transactions,
       prices,
       config: {
-        localCurrency: 'USD',
-        priceMethod: 'BASE',
-        costBasisMethod: 'FIFO',
-        decimalPlaces: 2
+        local_currency: 'USD',
+        price_method: 'BASE',
+        cost_basis_method: 'FIFO',
+        decimal_places: 2
       }
     });
-    const expected = {
+    const expected = taxReportFactory({
       config: {
+        local_currency: 'USD',
+        price_method: 'BASE',
         cost_basis_method: 'FIFO',
-        price_method: 'BASE'
+        decimal_places: 2,
+        allow_lot_overlap: true
       },
-      report: taxReportFactory({
+      report: {
         '2019': {
           assets: {
-            ZRX: { bought: '0', holdings: '-1', sold: '1' },
-            CETH: { bought: '50', holdings: '50', sold: '0' }
+            ZRX: { increase: '0', holdings: '-1', decrease: '1' },
+            CETH: { increase: '50', holdings: '50', decrease: '0' }
           },
           short: [
             {
@@ -842,7 +889,8 @@ describe('Compound Liquidations', () => {
               cost_basis: '0',
               date_acquired: '2019-01-01T00:10:00Z',
               date_sold: '2019-01-01T00:10:00Z',
-              proceeds: '1'
+              proceeds: '1',
+              tx_id_sale: liquidation.tx_id
             }
           ],
           unmatched: [
@@ -853,12 +901,12 @@ describe('Compound Liquidations', () => {
               date_acquired: '2019-01-01T00:10:00Z',
               date_sold: '2019-01-01T00:10:00Z',
               proceeds: '1',
-              transaction_id: 'c5ebb42f-8f56-495a-a349-858283844808'
+              tx_id_sale: liquidation.tx_id
             }
           ]
         }
-      })
-    };
+      }
+    });
     expect(expected).toEqual(received);
   });
 });

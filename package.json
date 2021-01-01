@@ -7,6 +7,7 @@
     "clean": "rm -rf lib",
     "prebuild": "npm run clean",
     "build": "webpack",
+    "test:basic": "jest --config ./jest.config.js",
     "test": "jest --config ./jest.config.js && jest --config ./jest.compiled.config.js",
     "test:build": "npm run build && npm run test",
     "format": "prettier --write '{src,__mocks__,tests}/**/*.{js,json,ts,tsx}'",

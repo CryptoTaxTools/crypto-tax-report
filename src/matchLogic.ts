@@ -37,14 +37,15 @@ export const unmatchedDisposal = (
     date_sold: samedate,
     cost_basis: '0',
     asset_amount: disposal.assetAmount,
-    date_acquired: samedate
+    date_acquired: samedate,
+    tx_id_sale: disposal.transactionId
   });
 
   // Even if the disposal represents "lost" crypto
   // or fiat, if it's not matched against a TaxLot
   // we should know about it.
   reportToUpdate = report.updateIn([disposalYear, 'unmatched'], (list: List<any>) =>
-    list.push(sale.set('transaction_id', disposal.transactionId))
+    list.push(sale)
   );
 
   if (disposal.isLost) {
@@ -105,7 +106,9 @@ export const exhaustLot = (
     date_sold: moment.utc(disposal.unix, 'X').format(),
     cost_basis: lotToDiminish.basisAmount,
     asset_amount: lotToDiminish.assetAmount,
-    date_acquired: moment.utc(lotToDiminish.unix, 'X').format()
+    date_acquired: moment.utc(lotToDiminish.unix, 'X').format(),
+    tx_id_lot: lotToDiminish.transactionId,
+    tx_id_sale: disposal.transactionId
   });
 
   if (disposal.isLost) {
@@ -172,7 +175,9 @@ export const exhaustDisposal = (
     date_sold: moment.utc(disposal.unix, 'X').format(),
     cost_basis: costBasisSold,
     asset_amount: disposal.assetAmount,
-    date_acquired: moment.utc(lotToDiminish.unix, 'X').format()
+    date_acquired: moment.utc(lotToDiminish.unix, 'X').format(),
+    tx_id_lot: lotToDiminish.transactionId,
+    tx_id_sale: disposal.transactionId
   });
 
   if (disposal.isLost) {

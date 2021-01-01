@@ -1,14 +1,10 @@
 import { Map as IMap, List } from 'immutable';
 import { BigNumber } from 'bignumber.js';
 
-import { Price, Withdrawal, LocalCurrency } from '../../types';
+import { Price, LocalCurrency, ImmutableMap, ITransaction, PriceMethod } from '../../types';
 import Disposal from '../../disposal';
-import {
-  transactionUnixNumber,
-  transactionHasFee,
-  transactionFeeCode,
-  getPriceBigNumber
-} from '../helpers';
+import { transactionUnixNumber, getPriceBigNumber } from '../helpers';
+import { getFeeAmount } from '../fee';
 
 /*
  * WITHDRAWAL
@@ -21,92 +17,63 @@ import {
  * Captial asset: spending, gift.
  */
 export const lotsAndDisposalsFromWithdrawal = ({
-  prices,
-  transaction,
+  txId,
+  pricesMap,
+  transactionsMap,
   localCurrency,
+  priceMethod,
   isLost = false,
   isBorrowRepay = false,
   isCompoundLiquidated = false
 }: {
-  prices: List<Price>;
-  transaction: Withdrawal;
+  txId: string;
+  pricesMap: ImmutableMap<{ string: List<Price> }>;
+  transactionsMap: ImmutableMap<{ string: List<ITransaction> }>;
   localCurrency: LocalCurrency;
+  priceMethod: PriceMethod;
   isLost?: boolean;
   isBorrowRepay?: boolean;
   isCompoundLiquidated?: boolean;
 }) => {
-  // Setup helper constants.
-  const txID = transaction.get('tx_id');
+  const transactionPrices = pricesMap.get(txId);
+  const transaction = transactionsMap.get(txId);
   const unixNumber = transactionUnixNumber(transaction);
-  const hasFee = transactionHasFee(transaction);
 
   /*
    * (1) Get the withdrawal amount to setup initial value for proceeds.
    */
   const withdrawalCode = transaction.get('withdrawal_code').toUpperCase();
   let withdrawalAmount = new BigNumber(transaction.get('withdrawal_amount'));
-  const withdrawalPrice = getPriceBigNumber(prices, withdrawalCode, localCurrency);
+  const withdrawalPrice = getPriceBigNumber(transactionPrices, withdrawalCode, localCurrency);
   let proceedsAmount = withdrawalAmount.times(withdrawalPrice);
 
-  /*
-   * (2) Adjust proceeds with applicable fees.
-   */
-  let feeCode;
-  let feeAmount = new BigNumber(0);
-  let feePrice;
-  let taxableFeeAmount;
-  if (hasFee) {
-    feeCode = transactionFeeCode(transaction);
-    feeAmount = new BigNumber(transaction.get('fee_amount'));
-    feePrice = getPriceBigNumber(prices, feeCode, localCurrency);
-    taxableFeeAmount = feeAmount.times(feePrice);
-    proceedsAmount = proceedsAmount.minus(taxableFeeAmount);
-  }
-
-  /*
-   * (3) Determine withdrawal Disposal values.
-   */
-
-  if (hasFee && feeCode === withdrawalCode) {
-    withdrawalAmount = BigNumber.sum(withdrawalAmount, feeAmount);
-  }
-
-  const disposalList = List([
-    new Disposal({
-      unix: unixNumber,
-      assetCode: withdrawalCode,
-      assetAmount: withdrawalAmount,
-      proceedsCode: localCurrency,
-      proceedsAmount: proceedsAmount,
-      transactionId: txID,
-      isLost,
-      isBorrowRepay,
-      isCompoundLiquidated
-    })
-  ]);
-
-  let otherDisposals = List();
-
-  /*
-   * (4) Standalone fees create their own disposal records.
-   */
-  if (hasFee && feeCode !== withdrawalCode) {
-    otherDisposals = otherDisposals.push(
-      new Disposal({
-        unix: unixNumber,
-        assetCode: feeCode,
-        assetAmount: feeAmount,
-        proceedsCode: localCurrency,
-        proceedsAmount: taxableFeeAmount,
-        transactionId: txID
-      })
-    );
-  }
-
-  const disposals = disposalList.merge(otherDisposals);
+  // (2) Adjust basis or proceeds with fees.
+  // Reduce taxable gain by the value of the fees.
+  // See fees.tx for more info.
+  const taxableFeeAmount = getFeeAmount({
+    transaction,
+    pricesMap,
+    transactionsMap,
+    localCurrency,
+    priceMethod
+  });
+  // Since this is a withdrawal (sale), fee reduces proceeds.
+  proceedsAmount = proceedsAmount.minus(taxableFeeAmount);
 
   return IMap({
     taxLots: List(),
-    disposals: disposals
+    disposals: List([
+      new Disposal({
+        unix: unixNumber,
+        assetCode: withdrawalCode,
+        assetAmount: withdrawalAmount,
+        proceedsCode: localCurrency,
+        proceedsAmount: proceedsAmount,
+        transactionId: txId,
+        isLost,
+        isBorrowRepay,
+        isCompoundLiquidated
+      })
+    ])
   });
 };

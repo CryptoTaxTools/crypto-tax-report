@@ -37,19 +37,17 @@ export const createReport = (options: TaxReportOptions): TaxReportOutput => {
     prices,
     transactions,
     config: {
-      localCurrency = 'USD',
-      priceMethod = 'BASE',
-      costBasisMethod = 'FIFO',
-      decimalPlaces = 2
+      local_currency: localCurrency = 'USD',
+      price_method: priceMethod = 'BASE',
+      cost_basis_method: costBasisMethod = 'FIFO',
+      decimal_places: decimalPlaces = 2,
+      allow_lot_overlap: allowLotOverlap = true
     } = {}
   } = options;
 
-  const transactionsList = fromJS(transactions);
-  const pricesList: List<Price> = fromJS(prices);
-  const priceTableMap = groupBy(pricesList, (price) => price.get('tx_id'));
   const lotsAndDisposals = makeLotsAndDisposals({
-    transactions: transactionsList,
-    priceTable: priceTableMap,
+    prices: fromJS(prices),
+    transactions: fromJS(transactions),
     priceMethod,
     localCurrency
   });
@@ -57,6 +55,7 @@ export const createReport = (options: TaxReportOptions): TaxReportOutput => {
   const taxLotList: List<TaxLot> = lotsAndDisposals.get('taxLotList');
   // If there are no Disposals, then build the list of
   // years from TaxLots instead.
+
   const sortedDisposals = sortAccountingRecords({ records: disposalList });
   const listToBuildYears =
     sortedDisposals.size > 0 ? sortedDisposals : sortAccountingRecords({ records: taxLotList });
@@ -69,7 +68,8 @@ export const createReport = (options: TaxReportOptions): TaxReportOutput => {
     reportIterable,
     taxLotsByAsset,
     costBasisMethod,
-    localCurrency
+    localCurrency,
+    allowLotOverlap
   });
   const reportWithNegHoldings = applyUnmatchedSales(taxReportOutput);
   const plainJsReport = reportWithNegHoldings.toJS();
@@ -79,7 +79,10 @@ export const createReport = (options: TaxReportOptions): TaxReportOutput => {
     report: plainNumberReport,
     config: {
       price_method: priceMethod,
-      cost_basis_method: costBasisMethod
+      cost_basis_method: costBasisMethod,
+      decimal_places: decimalPlaces,
+      local_currency: localCurrency,
+      allow_lot_overlap: allowLotOverlap
     }
   };
 };
@@ -89,8 +92,15 @@ const buildReport = (options: {
   taxLotsByAsset: IMap<string, List<TaxLot>>;
   costBasisMethod: CostBasisMethod;
   localCurrency: LocalCurrency;
+  allowLotOverlap: boolean;
 }): TaxReport => {
-  const { reportIterable, taxLotsByAsset, costBasisMethod, localCurrency } = options;
+  const {
+    reportIterable,
+    taxLotsByAsset,
+    costBasisMethod,
+    localCurrency,
+    allowLotOverlap
+  } = options;
 
   const output = reportIterable.reduce((acc: IMap<any, any>, iterableYear: IMap<any, any>) => {
     // for each year
@@ -113,9 +123,7 @@ const buildReport = (options: {
       iterableYear.get('year')
     );
 
-    // This may not be necessary long term.
-    // We include "bought" and "sold" right now.
-    const reportWithBoughtSold = setupAssetProperties(
+    const reportWithHoldingChanges = setupAssetProperties(
       iterableYear.get('year'),
       reportIncomeSetup,
       iterableYear.get('disposals'),
@@ -125,9 +133,10 @@ const buildReport = (options: {
     const resultingReportAndLots = buildReportYear({
       disposals: iterableYear.get('disposals'),
       lots: acc.get('lots'),
-      report: reportWithBoughtSold,
+      report: reportWithHoldingChanges,
       costBasisMethod,
-      localCurrency
+      localCurrency,
+      allowLotOverlap
     });
 
     const report = updateReportHoldingsFromLots(resultingReportAndLots, iterableYear.get('year'));
@@ -141,19 +150,23 @@ const buildReport = (options: {
 const buildReportYear = (
   options: BuildReportYearOptions
 ): ImmutableMap<{ report: TaxReportYear; lots: List<TaxLot> }> => {
-  const { disposals, lots, report, costBasisMethod, localCurrency } = options;
+  const { disposals, lots, report, costBasisMethod, localCurrency, allowLotOverlap } = options;
   const sortedDisposals = sortDisposals({ records: disposals });
-
   // for each Disposal in year...
   return sortedDisposals.reduce(
     (acc: ImmutableMap<{ report: TaxReportYear; lots: List<TaxLot> }>, disposal: Disposal) => {
       const disposalAsset = disposal.assetCode;
       const disposalLots = acc.get('lots').get(disposalAsset, List());
-      const beforeDisposal = (lot: TaxLot) => lot.unix <= disposal.unix;
+      const beforeDisposal = (lot: TaxLot) => {
+        if (allowLotOverlap) {
+          return lot.unix <= disposal.unix;
+        } else {
+          return lot.unix < disposal.unix;
+        }
+      };
       const lotsForStack = disposalLots.filter(beforeDisposal);
       const sortedLots = lotSort(lotsForStack, costBasisMethod);
       const remainingLots = disposalLots.filterNot(beforeDisposal);
-
       const res = matchLots({
         disposal,
         lotsForStack: sortedLots,
@@ -187,7 +200,6 @@ const matchLots = (options: {
   let currentDisposal = disposal;
   let lotStack: HackedStack<TaxLot> = lotsForStack.toStack();
   let currentReport = report;
-
   while (currentDisposal.assetAmount > new BigNumber(0)) {
     if (lotStack.size < 1) {
       const res = unmatchedDisposal(currentReport, currentDisposal, localCurrency);

@@ -1,6 +1,6 @@
 import { Map as IMap, List } from 'immutable';
 
-import { CompoundLiquidateBorrow_Borrower, Price, LocalCurrency } from '../../types';
+import { GenericTransformOptions } from '../../types';
 import { lotsAndDisposalsFromWithdrawal } from '../generic/withdrawal';
 
 /*
@@ -9,26 +9,29 @@ import { lotsAndDisposalsFromWithdrawal } from '../generic/withdrawal';
  * Creates Disposals associated with a compound COMPOUND_LIQUIDATEBORROW_BORROWER.
  */
 export const lotsAndDisposalsFromCompoundLiquidateBorrower = ({
-  transaction,
-  prices,
+  txId,
+  transactionsMap,
+  pricesMap,
+  priceMethod,
   localCurrency
-}: {
-  prices: List<Price>;
-  transaction: CompoundLiquidateBorrow_Borrower;
-  localCurrency: LocalCurrency;
-}) => {
-  const withdrawal = IMap({
-    tx_id: transaction.get('tx_id'),
-    tx_type: 'WITHDRAWAL',
-    timestamp: transaction.get('timestamp'),
-    withdrawal_code: transaction.get('liquidate_code'),
-    withdrawal_amount: transaction.get('liquidate_amount'),
-    fee_code: transaction.get('fee_code'),
-    fee_amount: transaction.get('fee_amount')
-  });
+}: GenericTransformOptions) => {
+  const transaction = transactionsMap.get(txId);
+  const updatedTransactionsMap = transactionsMap.set(
+    txId,
+    IMap({
+      tx_id: transaction.get('tx_id'),
+      tx_type: 'WITHDRAWAL',
+      timestamp: transaction.get('timestamp'),
+      withdrawal_code: transaction.get('liquidate_code'),
+      withdrawal_amount: transaction.get('liquidate_amount'),
+      fee_tx_ids: transaction.get('fee_tx_ids', List())
+    })
+  );
   return lotsAndDisposalsFromWithdrawal({
-    transaction: withdrawal,
-    prices,
+    txId,
+    transactionsMap: updatedTransactionsMap,
+    pricesMap,
+    priceMethod,
     localCurrency,
     isCompoundLiquidated: true
   });

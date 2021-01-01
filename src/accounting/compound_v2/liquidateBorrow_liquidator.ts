@@ -3,7 +3,7 @@ import { BigNumber } from 'bignumber.js';
 
 import TaxLot from '../../taxLot';
 import Disposal from '../../disposal';
-import { CompoundLiquidateBorrow_Liquidator, Price, LocalCurrency } from '../../types';
+import { GenericTransformOptions } from '../../types';
 import { transactionUnixNumber, getPriceBigNumber } from '../helpers';
 
 /*
@@ -19,16 +19,13 @@ import { transactionUnixNumber, getPriceBigNumber } from '../helpers';
  * quote asset: the cTokens transferred to the liquidator
  */
 export const lotsAndDisposalsFromCompoundLiquidateLiquidator = ({
-  transaction,
-  prices,
+  txId,
+  transactionsMap,
+  pricesMap,
   localCurrency
-}: {
-  prices: List<Price>;
-  transaction: CompoundLiquidateBorrow_Liquidator;
-  localCurrency: LocalCurrency;
-}) => {
-  // Setup helper constants.
-  const txID = transaction.get('tx_id');
+}: GenericTransformOptions) => {
+  const transactionPrices = pricesMap.get(txId);
+  const transaction = transactionsMap.get(txId);
   const unixNumber = transactionUnixNumber(transaction);
 
   /*
@@ -36,7 +33,7 @@ export const lotsAndDisposalsFromCompoundLiquidateLiquidator = ({
    */
   const withdrawalCode = transaction.get('repay_code').toUpperCase();
   let withdrawalAmount = new BigNumber(transaction.get('repay_amount'));
-  const withdrawalPrice = getPriceBigNumber(prices, withdrawalCode, localCurrency);
+  const withdrawalPrice = getPriceBigNumber(transactionPrices, withdrawalCode, localCurrency);
   let proceedsAmount = withdrawalAmount.times(withdrawalPrice);
 
   /*
@@ -50,7 +47,7 @@ export const lotsAndDisposalsFromCompoundLiquidateLiquidator = ({
       assetAmount: withdrawalAmount,
       proceedsCode: localCurrency,
       proceedsAmount: proceedsAmount,
-      transactionId: txID
+      transactionId: txId
     })
   ]);
 
@@ -59,7 +56,7 @@ export const lotsAndDisposalsFromCompoundLiquidateLiquidator = ({
    */
   const lotCode = transaction.get('seize_code').toUpperCase();
   let lotAmount = new BigNumber(transaction.get('seize_amount'));
-  const depositPrice = getPriceBigNumber(prices, lotCode, localCurrency);
+  const depositPrice = getPriceBigNumber(transactionPrices, lotCode, localCurrency);
   let basisAmount = lotAmount.times(depositPrice);
 
   const taxLots = List([
@@ -69,7 +66,7 @@ export const lotsAndDisposalsFromCompoundLiquidateLiquidator = ({
       assetAmount: lotAmount,
       basisCode: localCurrency,
       basisAmount: basisAmount,
-      transactionId: txID
+      transactionId: txId
     })
   ]);
 

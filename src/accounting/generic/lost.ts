@@ -1,6 +1,22 @@
 import { List, Map as IMap } from 'immutable';
-import { Price, LocalCurrency, Withdrawal, Lost } from '../../types';
 import { lotsAndDisposalsFromWithdrawal } from './withdrawal';
+import {
+  Price,
+  LocalCurrency,
+  ImmutableMap,
+  ITransaction,
+  PriceMethod,
+  Withdrawal,
+  Lost
+} from '../../types';
+
+interface LostOptions {
+  txId: string;
+  pricesMap: ImmutableMap<{ string: List<Price> }>;
+  transactionsMap: ImmutableMap<{ string: List<ITransaction> }>;
+  localCurrency: LocalCurrency;
+  priceMethod: PriceMethod;
+}
 
 /*
  * LOST
@@ -9,26 +25,27 @@ import { lotsAndDisposalsFromWithdrawal } from './withdrawal';
  * Does NOT create a taxable event.
  */
 export const lotsAndDisposalsFromLost = ({
-  prices,
-  transaction,
+  txId,
+  pricesMap,
+  transactionsMap,
+  priceMethod,
   localCurrency
-}: {
-  prices: List<Price>;
-  transaction: Lost;
-  localCurrency: LocalCurrency;
-}) => {
-  const withdrawal: Withdrawal = IMap({
-    tx_id: transaction.get('tx_id'),
-    tx_type: 'WITHDRAWAL',
-    timestamp: transaction.get('timestamp'),
-    withdrawal_code: transaction.get('lost_code'),
-    withdrawal_amount: transaction.get('lost_amount'),
-    fee_code: transaction.get('fee_code'),
-    fee_amount: transaction.get('fee_amount')
-  });
+}: LostOptions) => {
+  const updatedTransactionsMap = transactionsMap.set(
+    txId,
+    transactionsMap
+      .get(txId)
+      .set('tx_type', 'WITHDRAWAL')
+      .set('withdrawal_code', transactionsMap.getIn([txId, 'lost_code']))
+      .set('withdrawal_amount', transactionsMap.getIn([txId, 'lost_amount']))
+      .delete('lost_code')
+      .delete('lost_amount')
+  );
   return lotsAndDisposalsFromWithdrawal({
-    transaction: withdrawal,
-    prices,
+    txId,
+    pricesMap,
+    transactionsMap: updatedTransactionsMap,
+    priceMethod,
     localCurrency,
     isLost: true
   });

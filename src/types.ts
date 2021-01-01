@@ -14,8 +14,8 @@ export interface HackedStack<TaxLot> extends Stack<TaxLot> {
 }
 
 export interface TaxReportYearAssetBreakdown {
-  bought: string;
-  sold: string;
+  increase: string;
+  decrease: string;
   holdings: string;
 }
 
@@ -35,7 +35,8 @@ export interface ReportSale {
   date_sold: string;
   proceeds: string;
   cost_basis: string;
-  transaction_id?: string;
+  tx_id_lot?: string;
+  tx_id_sale?: string;
 }
 
 export interface TaxReportYearAssets {
@@ -60,27 +61,29 @@ export type TaxReport = ImmutableMap<{
 
 export interface TaxReportOutput {
   report: TaxReport;
-  config: TaxReportConfig;
-}
-
-export interface TaxReportConfig {
-  cost_basis_method: CostBasisMethod;
-  price_method: PriceMethod;
+  config: TaxRepoortOptionsConfig;
 }
 
 export interface TaxRepoortOptionsConfig {
   // localCurrency is the asset identifier that excludes activity from being
   // recorded as a taxable event when it otherwise would be.
-  localCurrency: LocalCurrency;
+  local_currency: LocalCurrency;
   // priceMethod determines the price used to determine the cost basis
   // or sale price used for a reportable transaction.
-  priceMethod: PriceMethod;
+  price_method: PriceMethod;
   // costBasisMethod determines the sorting order of the TaxLot list
   // that Disposals are applied against.
-  costBasisMethod: CostBasisMethod;
+  cost_basis_method: CostBasisMethod;
   // decimalPlaces represents the number of places to use
   // in tax report figures.
-  decimalPlaces: number;
+  decimal_places: number;
+  // If lot overlap is allowed, two transactions with exactly the same
+  // timestamp will be able to reference each others tax lots
+  // values when calculating sales. For example, instead of creating
+  // an unmatched sale, if another transaction increases the asset holdings
+  // at the same timestamp, that sale will use the available funds
+  // as the matched tax lot.
+  allow_lot_overlap?: boolean;
 }
 
 export type Transaction =
@@ -128,8 +131,7 @@ export interface TradeInput {
   base_code: string;
   quote_amount: string;
   quote_code: string;
-  fee_amount?: string | null | undefined;
-  fee_code?: string | null | undefined;
+  fee_tx_ids: string[] | null | undefined;
 }
 
 export type Trade = ImmutableMap<TradeInput>;
@@ -272,8 +274,8 @@ export interface PriceInput {
 
 export type Price = ImmutableMap<PriceInput>;
 export interface MakeLotsDisposalOptions {
-  transactions: List<Trade | IMap<any, any>>;
-  priceTable: ImmutableMap<{ any: List<Price> }>;
+  transactions: List<ITransaction>;
+  prices: List<Price>;
   priceMethod: PriceMethod;
   localCurrency: LocalCurrency;
 }
@@ -283,5 +285,19 @@ export interface BuildReportYearOptions {
   lots: List<TaxLot>;
   report: IMap<any, any>;
   costBasisMethod: CostBasisMethod;
+  localCurrency: LocalCurrency;
+  allowLotOverlap: boolean;
+}
+
+export type AccountingEntries = ImmutableMap<{
+  disposalList: List<Disposal>;
+  taxLotList: List<TaxLot>;
+}>;
+
+export interface GenericTransformOptions {
+  txId: string;
+  pricesMap: ImmutableMap<{ string: List<Price> }>;
+  transactionsMap: ImmutableMap<{ string: List<ITransaction> }>;
+  priceMethod: PriceMethod;
   localCurrency: LocalCurrency;
 }

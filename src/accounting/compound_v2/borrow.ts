@@ -1,26 +1,40 @@
 import { Map as IMap, List } from 'immutable';
 
-import { CompoundBorrow, Price, LocalCurrency } from '../../types';
+import { Price, LocalCurrency, ImmutableMap, ITransaction, PriceMethod } from '../../types';
 import { lotsAndDisposalsFromDeposit } from '../generic/deposit';
 
-export const lotsAndDisposalsFromCompoundBorrow = ({
-  transaction,
-  prices,
-  localCurrency
-}: {
-  transaction: CompoundBorrow;
-  prices: List<Price>;
+export interface BorrowOptions {
+  txId: string;
+  pricesMap: ImmutableMap<{ string: List<Price> }>;
+  transactionsMap: ImmutableMap<{ string: List<ITransaction> }>;
+  priceMethod: PriceMethod;
   localCurrency: LocalCurrency;
-}) => {
-  return lotsAndDisposalsFromDeposit({
-    transaction: IMap({
-      tx_id: transaction.get('tx_id'),
+}
+
+export const lotsAndDisposalsFromCompoundBorrow = ({
+  txId,
+  transactionsMap,
+  pricesMap,
+  priceMethod,
+  localCurrency
+}: BorrowOptions) => {
+  const borrow = transactionsMap.get(txId);
+  const updatedTransactionsMap = transactionsMap.set(
+    txId,
+    IMap({
+      tx_id: borrow.get('tx_id'),
       tx_type: 'DEPOSIT',
-      timestamp: transaction.get('timestamp'),
-      deposit_code: transaction.get('borrow_code'),
-      deposit_amount: transaction.get('borrow_amount')
-    }),
-    prices,
+      timestamp: borrow.get('timestamp'),
+      deposit_code: borrow.get('borrow_code'),
+      deposit_amount: borrow.get('borrow_amount'),
+      fee_tx_ids: borrow.get('fee_tx_ids', List())
+    })
+  );
+  return lotsAndDisposalsFromDeposit({
+    txId,
+    transactionsMap: updatedTransactionsMap,
+    pricesMap,
+    priceMethod,
     localCurrency
   });
 };
