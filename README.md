@@ -10,7 +10,7 @@ Licensing is AGPL v3.0 by default but an MIT license is available for purchase. 
 ## Installation
 
 ```
-npm install git://github.com/CryptoTaxTools/crypto-tax-report.git#v0.0.3
+npm install git://github.com/CryptoTaxTools/crypto-tax-report.git#v0.0.4
 ```
 
 ## Example Use
