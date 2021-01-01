@@ -4,6 +4,9 @@ A javascript library for creating configurable tax reports. Supports generic tra
 
 *Note: This library is currently in alpha and subject to breaking changes. Please install with a pin to a version tag or commit.*
 
+## Licensing
+Licensing is AGPL v3.0 by default but an MIT license is available for purchase. Reach out at hello@cryptotaxtools.com to purchase a license for commercial use.
+
 ## Installation
 
 ```
